@@ -39,6 +39,7 @@ private let checkoutLiquidNotSupportedReason = "checkout_liquid_not_supported"
 
 class CheckoutWebView: WKWebView {
 	private static var cache: CacheEntry?
+    private static let processPool = WKProcessPool()
 
 	static var preloadingActivatedByClient: Bool = false
 
@@ -95,6 +96,7 @@ class CheckoutWebView: WKWebView {
 
 	override init(frame: CGRect, configuration: WKWebViewConfiguration) {
 		configuration.applicationNameForUserAgent = CheckoutBridge.applicationName
+        configuration.processPool = Self.processPool
 
 		super.init(frame: frame, configuration: configuration)
 
