@@ -40,6 +40,12 @@ private let checkoutLiquidNotSupportedReason = "checkout_liquid_not_supported"
 class CheckoutWebView: WKWebView {
 	private static var cache: CacheEntry?
 
+	private static let clickSaveShoppingInformationScript: String = """
+	if (!document.getElementById('save_shipping_information').checked) {
+		document.getElementById('save_shipping_information').click();
+	};
+	"""
+
 	static var preloadingActivatedByClient: Bool = false
 
 	/// A reference to the view is needed when preload is deactivated in order to detatch the bridge
@@ -137,6 +143,7 @@ class CheckoutWebView: WKWebView {
 		scrollView.contentInsetAdjustmentBehavior = .never
 
 		setBackgroundColor()
+		setSaveShippingInformationOn()
 
 		if recovery {
 			observeNavigationChanges()
@@ -209,6 +216,15 @@ class CheckoutWebView: WKWebView {
 			CheckoutBridge.sendMessage(self, messageName: "presented", messageBody: nil)
 			presentedEventDidDispatch = true
 		}
+	}
+    
+	private func setSaveShippingInformationOn() {
+		let script = WKUserScript(
+			source: Self.clickSaveShoppingInformationScript,
+			injectionTime: .atDocumentEnd,
+			forMainFrameOnly: true
+		)
+		configuration.userContentController.addUserScript(script)
 	}
 }
 
@@ -346,6 +362,10 @@ extension CheckoutWebView: WKNavigationDelegate {
 
 	func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
 		viewDelegate?.checkoutViewDidFinishNavigation()
+
+		webView.evaluateJavaScript(Self.clickSaveShoppingInformationScript) { _, error in
+			print(dump(error))
+		}
 
 		if let startTime = timer {
 			let endTime = Date()
